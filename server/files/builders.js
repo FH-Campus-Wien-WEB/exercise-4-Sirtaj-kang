@@ -94,13 +94,38 @@ class ListBuilder extends ParentChildBuilder {
 }
 
 function formatRuntime(runtime) {
+  if (!Number.isFinite(runtime)) {
+    return "Unknown runtime";
+  }
   const hours = Math.trunc(runtime / 60);
   const minutes = runtime % 60;
   return hours + "h " + minutes + "m";
 }
 
+function formatReleaseDate(released) {
+  if (!released) {
+    return "Release date unknown";
+  }
+
+  const date = new Date(released);
+  if (Number.isNaN(date.getTime())) {
+    return "Release date unknown";
+  }
+
+  return "Released on " + date.toLocaleDateString("en-US");
+}
+
+function ensureArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
 export class MovieBuilder extends ElementBuilder {
   constructor(movie, deleteMovie, isLoggedIn) {
+    const genres = ensureArray(movie.Genres);
+    const directors = ensureArray(movie.Directors);
+    const writers = ensureArray(movie.Writers);
+    const actors = ensureArray(movie.Actors);
+
     super("article")
       .id(movie.imdbID)
       .append(new ElementBuilder("img").with("src", movie.Poster))
@@ -118,17 +143,17 @@ export class MovieBuilder extends ElementBuilder {
         new ParagraphBuilder().items(
           "Runtime " + formatRuntime(movie.Runtime),
           "\u2022",
-          "Released on " + new Date(movie.Released).toLocaleDateString("en-US")
+          formatReleaseDate(movie.Released)
         )
       )
-      .append(new ParagraphBuilder().childClass("genre").items(movie.Genres))
-      .append(new ElementBuilder("p").text(movie.Plot))
-      .append(new ElementBuilder("h2").pluralizedText("Director", movie.Directors))
-      .append(new ListBuilder().items(movie.Directors))
-      .append(new ElementBuilder("h2").pluralizedText("Writer", movie.Writers))
-      .append(new ListBuilder().items(movie.Writers))
-      .append(new ElementBuilder("h2").pluralizedText("Actor", movie.Actors))
-      .append(new ListBuilder().items(movie.Actors));
+      .append(new ParagraphBuilder().childClass("genre").items(genres))
+      .append(new ElementBuilder("p").text(movie.Plot || ""))
+      .append(new ElementBuilder("h2").pluralizedText("Director", directors))
+      .append(new ListBuilder().items(directors))
+      .append(new ElementBuilder("h2").pluralizedText("Writer", writers))
+      .append(new ListBuilder().items(writers))
+      .append(new ElementBuilder("h2").pluralizedText("Actor", actors))
+      .append(new ListBuilder().items(actors));
   }
 }
 
